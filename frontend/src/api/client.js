@@ -1,8 +1,13 @@
 import axios from 'axios';
 
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+const cleanBaseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+const API_ROOT = cleanBaseUrl ? `${cleanBaseUrl}/api` : '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_ROOT,
   withCredentials: true,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -23,7 +28,6 @@ api.interceptors.request.use(
 // Response interceptor to handle token expiration and unwrap ApiResponse
 api.interceptors.response.use(
   (response) => {
-    // If backend returns standard ApiResponse format, extract payload
     if (response.data && typeof response.data.success === 'boolean') {
       return response.data;
     }
@@ -31,10 +35,11 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const refreshResponse = await axios.post('/api/auth/refresh', {}, { withCredentials: true });
+        const refreshUrl = `${API_ROOT}/auth/refresh`;
+        const refreshResponse = await axios.post(refreshUrl, {}, { withCredentials: true, timeout: 15000 });
         if (refreshResponse.data?.data?.accessToken) {
           const newToken = refreshResponse.data.data.accessToken;
           localStorage.setItem('gd_access_token', newToken);
@@ -46,7 +51,21 @@ api.interceptors.response.use(
         localStorage.removeItem('gd_user');
       }
     }
-    return Promise.reject(error.response?.data || { message: error.message });
+
+    // Network resilience error formatting
+    let friendlyMessage = error.response?.data?.message || error.message || 'An unexpected network error occurred.';
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      friendlyMessage = 'Connection is slow. Please check your internet and retry.';
+    } else if (error.code === 'ERR_NETWORK' || !error.response) {
+      friendlyMessage = 'Unable to reach GramDrishti AI backend. Please verify your connection.';
+    }
+
+    return Promise.reject({
+      success: false,
+      message: friendlyMessage,
+      status: error.response?.status || 0,
+      raw: error
+    });
   }
 );
 

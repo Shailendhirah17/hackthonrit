@@ -132,17 +132,17 @@ export const DashboardPage = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
           <Link
             to="/ai-intelligence"
-            className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition"
+            className="flex-1 sm:flex-initial px-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition min-h-[48px] active:scale-98"
           >
             <Sparkles className="w-4 h-4" />
             <span>Launch AI Gap Scanner</span>
           </Link>
           <Link
             to="/gis-explorer"
-            className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 transition"
+            className="flex-1 sm:flex-initial px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition min-h-[48px] active:scale-98"
           >
             <MapPin className="w-4 h-4 text-emerald-400" />
             <span>Open Full GIS Map</span>

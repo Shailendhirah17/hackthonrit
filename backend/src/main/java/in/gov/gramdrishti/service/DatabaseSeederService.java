@@ -155,7 +155,8 @@ public class DatabaseSeederService implements CommandLineRunner {
                 {"Vikramaditya Rao", "pm@gramdrishti.gov.in", "9876500003", RoleEnum.PROJECT_MANAGER, "PMGSY Infrastructure Directorate", "Odisha", "Kalahandi"},
                 {"Ananya Sengupta", "analyst@gramdrishti.gov.in", "9876500004", RoleEnum.ANALYST, "GIS & Remote Sensing Cell", "Rajasthan", "Barmer"},
                 {"Suresh Naik", "field@gramdrishti.gov.in", "9876500005", RoleEnum.FIELD_OFFICER, "Panchayat Development Office", "Maharashtra", "Gadchiroli"},
-                {"Kavita Nair", "viewer@gramdrishti.gov.in", "9876500006", RoleEnum.VIEWER, "Citizen Oversight & Media Portal", "National", "All"}
+                {"Kavita Nair", "viewer@gramdrishti.gov.in", "9876500006", RoleEnum.VIEWER, "Citizen Oversight & Media Portal", "National", "All"},
+                {"Hackathon Demo Judge", "demo.viewer@gramdrishti.gov.in", "9876500007", RoleEnum.VIEWER, "Evaluation & Jury Directorate", "National", "All"}
         };
 
         for (Object[] u : users) {
