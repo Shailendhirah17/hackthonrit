@@ -35,8 +35,12 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !originalRequest.url?.includes('/auth/')) {
       originalRequest._retry = true;
+      const currentToken = localStorage.getItem('gd_access_token');
+      if (!currentToken) {
+        return Promise.reject(error.response?.data || { message: 'Unauthorized' });
+      }
       try {
         const refreshUrl = `${API_ROOT}/auth/refresh`;
         const refreshResponse = await axios.post(refreshUrl, {}, { withCredentials: true, timeout: 15000 });
@@ -48,7 +52,6 @@ api.interceptors.response.use(
         }
       } catch (refreshErr) {
         localStorage.removeItem('gd_access_token');
-        localStorage.removeItem('gd_user');
       }
     }
 

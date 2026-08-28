@@ -112,9 +112,14 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/swagger-ui.html"
                 ).permitAll()
-                // Read-only GIS endpoints accessible for viewer/all authenticated users
+                // Read-only GIS, dashboard, and exploration endpoints accessible for viewer/public exploration
                 .antMatchers(HttpMethod.GET, "/api/gis/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/dashboard/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/villages/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/infrastructure/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/projects/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/requirements/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/ai/**").permitAll()
                 .anyRequest().authenticated();
 
         // Add rate limiting and JWT filters

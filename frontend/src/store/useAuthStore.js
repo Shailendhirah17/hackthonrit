@@ -130,10 +130,22 @@ export const useAuthStore = create((set, get) => {
     },
 
     // Quick demo switcher to test the UI for any role
-    switchRole: (roleKey) => {
+    switchRole: async (roleKey) => {
       const targetUser = DEMO_USERS[roleKey] || DEMO_USERS.SUPER_ADMIN;
       localStorage.setItem('gd_user', JSON.stringify(targetUser));
       set({ user: targetUser, isAuthenticated: true });
+      try {
+        const response = await api.post('/auth/login', {
+          email: targetUser.email,
+          password: 'Password@123'
+        });
+        if (response.success && response.data?.accessToken) {
+          localStorage.setItem('gd_access_token', response.data.accessToken);
+          set({ token: response.data.accessToken });
+        }
+      } catch (e) {
+        // Keep demo offline fallback
+      }
     },
 
     hasPermission: (permissionName) => {
