@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # 1. MySQL 8 Database
+  mysql:
+    image: mysql:8.0
+    container_name: gramdrishti-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_master_pass
+      MYSQL_DATABASE: gramdrishti_db
+      MYSQL_USER: gramdrishti_user
+      MYSQL_PASSWORD: gramdrishti_secret_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "gramdrishti_user", "-pgramdrishti_secret_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gramdrishti-net
+
+  # 2. Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: gramdrishti-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - gramdrishti-net
+
+  # 3. MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: gramdrishti-minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - gramdrishti-net
+
+  # 4. AI / ML Microservice (FastAPI + CV)
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: gramdrishti-ai-service
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+    networks:
+      - gramdrishti-net
+
+  # 5. Java Spring Boot Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gramdrishti-backend
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ai-service:
+        condition: service_started
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gramdrishti_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: gramdrishti_user
+      SPRING_DATASOURCE_PASSWORD: gramdrishti_secret_pass
+      REDIS_HOST: redis
+      MINIO_ENDPOINT: http://minio:9000
+      AI_SERVICE_URL: http://ai-service:8000
+      CORS_ALLOWED_ORIGINS: http://localhost,http://localhost:80,http://localhost:5173,http://localhost:3000
+    ports:
+      - "8080:8080"
+    networks:
+      - gramdrishti-net
+
+  # 6. React GIS Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gramdrishti-frontend
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - gramdrishti-net
+
+  # 7. Nginx Apex Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: gramdrishti-nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - gramdrishti-net
+
+volumes:
+  mysql_data:
+  redis_data:
+  minio_data:
+
+networks:
+  gramdrishti-net:
+    driver: bridge
